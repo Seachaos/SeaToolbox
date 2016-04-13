@@ -14,7 +14,7 @@ var output_filename string
 var result []string
 
 func initValues(){
-	root_dir = "/Users/seachaos/Music/Hi-Fi/"
+	root_dir = "/Volumes/Untitled/"
 
 	filter_rule = map[string]string{}
 	filter_rule["file_name_has"] = "梁靜茹"
@@ -46,6 +46,20 @@ func _file_has_name(file_name_has string, path string, f os.FileInfo) bool{
 }
 
 func fileFilter(path string, f os.FileInfo) bool {
+	name := f.Name()
+	if(strings.HasPrefix(name, ".")){
+		return false;
+	}
+	if(strings.HasPrefix(name, "._")){
+		return false;
+	}
+	if(strings.HasSuffix(name, ".jpg")){
+		return false;
+	}
+	if(strings.HasSuffix(name, ".png")){
+		return false;
+	}
+
 	file_name_has, present := filter_rule["file_name_has"]
 	if present {
 		if _file_has_name(file_name_has, path, f) {
