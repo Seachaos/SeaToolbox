@@ -1,8 +1,7 @@
 package main
 import (
-    // "bufio"
     "fmt"
-    // "io"
+    "runtime"
     "io/ioutil"
     "strings"
     "os"
@@ -24,6 +23,9 @@ func initValues(){
 	output_filename = "梁靜茹歌單.m3u"
 
 	result = make([]string, 0)
+
+	// playlist will random?
+	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func check(err error){
@@ -53,20 +55,27 @@ func fileFilter(path string, f os.FileInfo) bool {
 	return false
 }
 
-func intoSubFolder(dstDir string){
+func intoSubFolder(dstDir string, pc chan int){
 	files, err := ioutil.ReadDir(dstDir)
     check(err)
-    for _, f := range files{
+    file_num := len(files)
+    ch := make(chan int, file_num)
+    for i, f := range files{
     	path := dstDir + "/" + f.Name()
     	if f.IsDir() {
-    		intoSubFolder(path)
+    		go intoSubFolder(path, ch)
     		continue
     	}
     	if fileFilter(path, f) {
     		path = strings.Replace(path, root_dir, output_prefix, 1)
     		result = append(result, path)
     	}
+    	ch <- i
     }
+    for i := 0; i < file_num; i++{
+    	<- ch
+    }
+    pc <- 1
 }
 
 func outputResult(){
@@ -91,6 +100,8 @@ func outputResult(){
 
 func main(){
 	initValues()
-	intoSubFolder(root_dir)
+	ch := make(chan int)
+	go intoSubFolder(root_dir, ch)
+	<- ch
 	outputResult()
 }
